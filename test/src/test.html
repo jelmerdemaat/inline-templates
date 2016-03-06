@@ -1,2 +1,11 @@
-+mustache("../template.html", { "name": "Jelmer", "version": 0.1 })
-lalalaall +mustache("../template.html")
++mustache("../template.mustache", { "name": "Jelmer", "version": 0.1 })
+
++mustache('../template.mustache', { "name": "Jelmer (de) Maat", "version": 0.1 })
+
++mustache("../template.mustache", { "name": "Piet" } )
+
+test +mustache("../template.mustache", { "name": { "name": "Jelmer" }}) test
+
+lalalaall +mustache("../template.mustache", { "name": "Piet" } )
+
++handlebars("../template.hbs", { "name": "Piet", "test": "oke" } )

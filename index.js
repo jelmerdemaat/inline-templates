@@ -1,38 +1,75 @@
 var fs = require('fs');
 var path = require('path');
-var esprima = require('esprima');
-var escodegen = require('escodegen');
 
-var result, engine, template, data;
+var validInclude = new RegExp(/\+(\S+)\((.*)\)/gi),
+    includeData = new RegExp(/{.*}/gi),
+    includeTemplate = new RegExp(/(.*?)\,/i);
 
-function parseInclude(includeString) {
-  if(!includeString) throw new Error('I need an include string.');
+var supportedEngines = {
+  mustache: function(template, data) {
+    var Mustache = require('mustache');
+    if(data) {
+      return Mustache.render(template, data);
+    }
+    return Mustache.render(template);
+  },
+  handlebars: function(template, data) {
+    var Handlebars = require('handlebars');
+    if(data) {
+      return Handlebars.compile(template)(data);
+    }
+    return Handlebars.compile(template);
+  }
+};
 
-  result = esprima.parse(includeString);
+function unquote(string) {
+  return string.replace(/\'|\"/gi, '');
+}
 
-  if(typeof result === 'object') {
-    if(result.body[0].expression &&
-       result.body[0].expression.callee &&
-       result.body[0].expression.arguments.length > 0) {
-      engine = result.body[0].expression.callee.name;
+function readTemplate(template, baseFolder) {
+  var templatePath = path.join(baseFolder, template);
 
-      if(result.body[0].expression.arguments[0].type === 'Literal') {
-        template = result.body[0].expression.arguments[0].value;
+  return fs.readFileSync(templatePath, 'utf-8');
+}
 
-        if(result.body[0].expression.arguments[1] && result.body[0].expression.arguments[1].type === 'ObjectExpression') {
-          data = JSON.parse(escodegen.generate(result.body[0].expression.arguments[1], { format: { json: true, compact: true } }));
-        }
-      } else {
-        throw new Error('Template name must be a string.');
-      }
+function parseInclude(includeType, content) {
+  if(!includeType) throw new Error('I need a type of include.');
 
-      return { engine: engine, template: template, data: data };
+  var result = { engine: includeType };
 
+  data = content.match(includeData);
+
+  if(data && data.length) {
+    result.data = JSON.parse(data[0].replace(/\n|\r/g, ''));
+
+    // Take first capturing group from content match
+    template = unquote(content.match(includeTemplate)[1]);
+
+    if(template && template.length && template.indexOf(':') === -1) {
+      result.template = template;
     } else {
-      throw new Error(`Invalid inline template expression "${includeString}". See the docs for the correct formatting.`);
+      throw new Error('Could not read template name from ' + content)
     }
   } else {
-    throw new Error(result);
+    result.template = unquote(content);
+  }
+
+  return result;
+}
+
+function render(includeType, content, baseFolder) {
+  var includeObject = parseInclude(includeType, content),
+      templateContent = readTemplate(includeObject.template, baseFolder);
+
+  // If engine is one that this module supports:
+  if(supportedEngines[includeObject.engine]) {
+    if(includeObject.data) {
+      return supportedEngines[includeObject.engine](templateContent, includeObject.data);
+    } else {
+      return supportedEngines[includeObject.engine](templateContent);
+    }
+  } else {
+    throw new Error('Rendering engine "' + includeObject.engine + '" is unrecognized or not supported.')
   }
 }
 
@@ -40,11 +77,11 @@ function findIncludes(file) {
   fs.readFile(file, 'utf-8', function(err, data) {
     if(err) throw err;
 
-    var includes = data.replace(/\+(\S*\(.*\))/gi, function(substring, lastpart) {
-      console.log(lastpart);
-      return parseInclude(lastpart);
+    var baseFolder = path.dirname(file) || './';
+
+    data.replace(validInclude, function(substring, includeType, content) {
+      return render(includeType, content, baseFolder);
     });
-    console.info(includes);
   });
 }
 
