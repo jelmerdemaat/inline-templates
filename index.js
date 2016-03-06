@@ -29,7 +29,7 @@ function parseInclude(includeString) {
       return { engine: engine, template: template, data: data };
 
     } else {
-      throw new Error('Invalid inline template expression. See the docs for the correct formatting.');
+      throw new Error(`Invalid inline template expression "${includeString}". See the docs for the correct formatting.`);
     }
   } else {
     throw new Error(result);
