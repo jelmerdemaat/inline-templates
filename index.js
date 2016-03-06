@@ -1,7 +1,7 @@
+var fs = require('fs');
+var path = require('path');
 var esprima = require('esprima');
 var escodegen = require('escodegen');
-
-var testFunction = 'handlebars("../template.html", { "name": "Jelmer", "version": 0.1 })';
 
 var result, engine, template, data;
 
@@ -36,6 +36,16 @@ function parseInclude(includeString) {
   }
 }
 
-function findIncludes(files) {
+function findIncludes(file) {
+  fs.readFile(file, 'utf-8', function(err, data) {
+    if(err) throw err;
 
+    var includes = data.replace(/\+(\S*\(.*\))/gi, function(substring, lastpart) {
+      console.log(lastpart);
+      return parseInclude(lastpart);
+    });
+    console.info(includes);
+  });
 }
+
+findIncludes('./test/src/test.html');
