@@ -1,5 +1,5 @@
-var fs = require('fs');
-var path = require('path');
+var fs = require('fs'),
+    path = require('path');
 
 var validInclude = new RegExp(/\+(\S+)\((.*)\)/gi),
     includeData = new RegExp(/{.*}/gi),
@@ -65,24 +65,37 @@ function render(includeType, content, baseFolder) {
   if(supportedEngines[includeObject.engine]) {
     if(includeObject.data) {
       return supportedEngines[includeObject.engine](templateContent, includeObject.data);
-    } else {
-      return supportedEngines[includeObject.engine](templateContent);
     }
+    return supportedEngines[includeObject.engine](templateContent);
   } else {
     throw new Error('Rendering engine "' + includeObject.engine + '" is unrecognized or not supported.')
   }
 }
 
 function findIncludes(file) {
-  fs.readFile(file, 'utf-8', function(err, data) {
-    if(err) throw err;
+  var contents = fs.readFileSync(file, 'utf-8');
 
+  if(typeof contents === 'string' && contents.length) {
     var baseFolder = path.dirname(file) || './';
 
-    data.replace(validInclude, function(substring, includeType, content) {
+    contents = contents.replace(validInclude, function(substring, includeType, content) {
       return render(includeType, content, baseFolder);
     });
-  });
+
+    return contents;
+  } else {
+    throw new Error('Could not read file ' + file);
+  }
 }
 
-findIncludes('./test/src/test.html');
+module.exports = function(file) {
+  if(!file) {
+    throw new Error('I must be given a file to read.');
+  }
+
+  if(typeof file !== 'string') {
+    throw new Error('I must be given a string value to a file.');
+  }
+
+  return findIncludes(file);
+}
