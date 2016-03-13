@@ -14,7 +14,7 @@ $ npm install --save inline-templates
 const inlineTemplates = require('inline-templates');
 
 inlineTemplates('./src/index.html');
-// => returns index.html with template references
+// returns index.html with template references
 // compiled inline.
 ```
 
