@@ -1,7 +1,6 @@
 # inline-templates [![Build Status](https://travis-ci.org/jelmerdemaat/inline-templates.svg?branch=master)](https://travis-ci.org/jelmerdemaat/inline-templates)
 
-> My hunky-dory module
-
+Inlines templates inside given source files.
 
 ## Install
 
@@ -9,36 +8,25 @@
 $ npm install --save inline-templates
 ```
 
-
 ## Usage
 
 ```js
 const inlineTemplates = require('inline-templates');
 
-inlineTemplates('unicorns');
-//=> 'unicorns & rainbows'
+inlineTemplates('./src/index.html');
+// => returns index.html with template references
+// compiled inline.
 ```
-
 
 ## API
 
-### inlineTemplates(input, [options])
+### inlineTemplates(input)
 
-#### input
+#### source
 
 Type: `string`
 
-Lorem ipsum.
-
-#### options
-
-##### foo
-
-Type: `boolean`<br>
-Default: `false`
-
-Lorem ipsum.
-
+The source file.
 
 ## License
 
