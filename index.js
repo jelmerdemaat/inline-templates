@@ -51,6 +51,7 @@ function parseInclude(includeType, content) {
       throw new Error('Could not read template name from ' + content)
     }
   } else {
+    if(result.engine === 'handlebars') result.data = {};
     result.template = unquote(content);
   }
 
